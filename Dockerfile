@@ -20,8 +20,7 @@ RUN echo "deb http://archive.debian.org/debian/ buster main" > /etc/apt/sources.
     apt-get -o Acquire::Check-Valid-Until=false update && \
     apt-get install -y --no-install-recommends \
       cron \
-      libpq-dev \
-      sudo && \
+      libpq-dev && \
     rm -rf /var/lib/apt/lists/* && \
     echo "gem: --no-document" > /root/.gemrc && \
     gem install bundler:2.1.4 && \
@@ -44,10 +43,8 @@ CMD ["/api/scripts/server"]
 
 # Create non-root user and set up permissions
 RUN useradd -u 1000 -m -r judge0 && \
-    echo "judge0 ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/judge0 && \
     mkdir -p /api/tmp && \
-    chown -R judge0:judge0 /api /opt/.gem && \
-    chmod 440 /etc/sudoers.d/judge0
+    chown -R judge0:judge0 /api /opt/.gem
 
 USER judge0
 
