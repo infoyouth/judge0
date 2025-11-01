@@ -42,7 +42,7 @@ Our infrastructure allows you to **focus on building your product** and forget a
 
 **Sulu or RapidAPI plans are not (good) enough for you?**
 
-Let's talk. [Contact us](mailto:contact@judge0.com).
+Let's talk. [Contact us](mailto:info.youthinno@gmail.com).
 
 ## Flavors
 Judge0 comes in two flavors: [Judge0 CE](https://judge0.com/ce) and [Judge0 Extra CE](https://judge0.com/extra-ce). They differ mostly in the [supported languages](https://github.com/judge0/judge0#supported-languages).
