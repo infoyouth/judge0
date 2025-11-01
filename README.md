@@ -59,7 +59,7 @@ Our infrastructure allows you to **focus on building your product** and forget a
 
 ### Sulu or Rapid plans are not (good) enough for you?
 
-Let's talk. [Contact us](mailto:contact@judge0.com).
+Let's talk. [Contact us](mailto:info.youthinno@gmail.com).
 
 ## Flavors
 
@@ -230,7 +230,7 @@ Do you have a question, feature request, or something else on your mind? Or do y
 * [Join our Discord server](https://discord.gg/GRc3v6n)
 * [Watch asciicasts](https://asciinema.org/~hermanzdosilovic)
 * [Report an issue](https://github.com/judge0/judge0/issues/new)
-* [Contact us](mailto:contact@judge0.com)
+* [Contact us](mailto:info.youthinno@gmail.com)
 * [Schedule an online meeting with us](https://meet.judge0.com)
 
 ## Author and Contributors

@@ -1,18 +1,22 @@
 FROM judge0/compilers:1.4.0 AS production
 
-ENV JUDGE0_HOMEPAGE "https://judge0.com"
+ENV JUDGE0_HOMEPAGE "https://github.com/infoyouth"
 LABEL homepage=$JUDGE0_HOMEPAGE
 
-ENV JUDGE0_SOURCE_CODE "https://github.com/judge0/judge0"
+ENV JUDGE0_SOURCE_CODE "https://github.com/infoyouth/judge0"
 LABEL source_code=$JUDGE0_SOURCE_CODE
 
-ENV JUDGE0_MAINTAINER "Herman Zvonimir Došilović <hermanz.dosilovic@gmail.com>"
+ENV JUDGE0_MAINTAINER "InfoYouth <info.youthinno@gmail.com>"
 LABEL maintainer=$JUDGE0_MAINTAINER
 
 ENV PATH "/usr/local/ruby-2.7.0/bin:/opt/.gem/bin:$PATH"
 ENV GEM_HOME "/opt/.gem/"
 
-RUN apt-get update && \
+# Create a non-root user
+RUN groupadd -r judge0 && useradd -r -g judge0 judge0
+
+RUN mkdir -p /opt/.gem && \
+    apt-get update && \
     apt-get install -y --no-install-recommends \
       cron \
       libpq-dev \
@@ -20,7 +24,9 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* && \
     echo "gem: --no-document" > /root/.gemrc && \
     gem install bundler:2.1.4 && \
-    npm install -g --unsafe-perm aglio@2.3.0
+    npm install -g --unsafe-perm aglio@2.3.0 && \
+    # Fix permissions
+    chown -R judge0:judge0 /opt/.gem
 
 EXPOSE 2358
 

@@ -11,6 +11,6 @@
 
 ## Reporting a Vulnerability
 
-Please report vulnerability via GitHub or email at security@judge0.com.
+Please report vulnerability via GitHub or email at info.youthinno@gmail.com.
 
 Your reports will be reviewed ASAP, and an update will also be released ASAP.
