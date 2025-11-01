@@ -51,10 +51,16 @@ RUN mkdir -p $GEM_HOME && \
 
 EXPOSE 2358
 
-# Create non-root user and set up permissions
-RUN groupadd -r judge0 && useradd -r -g judge0 judge0 && \
-    mkdir -p /api/tmp /var/run/cron && \
-    chown -R judge0:judge0 /opt/.gem /var/run/cron
+# Set up required directories and permissions
+RUN mkdir -p /api/tmp /var/run/cron /var/lib/cron /var/log/cron && \
+    chmod 777 /var/run && \
+    chmod 777 /var/run/cron && \
+    chmod 777 /var/lib/cron && \
+    chmod 777 /var/log/cron && \
+    # Create non-root user
+    groupadd -r judge0 && \
+    useradd -r -g judge0 judge0 && \
+    chown -R judge0:judge0 /api /opt/.gem
 
 WORKDIR /api
 
