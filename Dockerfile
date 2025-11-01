@@ -1,22 +1,23 @@
-FROM judge0/compilers:1.4.0 AS production
+FROM judge0/compilers:1.6.0-extra AS production
 
-ENV JUDGE0_HOMEPAGE "https://github.com/infoyouth"
+ENV JUDGE0_HOMEPAGE=https://github.com/infoyouth
 LABEL homepage=$JUDGE0_HOMEPAGE
 
-ENV JUDGE0_SOURCE_CODE "https://github.com/infoyouth/judge0"
+ENV JUDGE0_SOURCE_CODE=https://github.com/infoyouth/judge0
 LABEL source_code=$JUDGE0_SOURCE_CODE
 
-ENV JUDGE0_MAINTAINER "InfoYouth <info.youthinno@gmail.com>"
+ENV JUDGE0_MAINTAINER="Youth Innovations <info.youthinno@gmail.com>"
 LABEL maintainer=$JUDGE0_MAINTAINER
 
-ENV PATH "/usr/local/ruby-2.7.0/bin:/opt/.gem/bin:$PATH"
-ENV GEM_HOME "/opt/.gem/"
+ENV PATH=/usr/local/ruby-2.7.0/bin:/opt/.gem/bin:$PATH
+ENV GEM_HOME=/opt/.gem/
 
-# Create a non-root user
-RUN groupadd -r judge0 && useradd -r -g judge0 judge0
-
-RUN mkdir -p /opt/.gem && \
-    apt-get update && \
+# Set up environment and install dependencies
+RUN echo "deb http://archive.debian.org/debian/ buster main" > /etc/apt/sources.list && \
+    echo "deb http://archive.debian.org/debian-security/ buster/updates main" >> /etc/apt/sources.list && \
+    echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99no-check-valid-until && \
+    mkdir -p /opt/.gem && \
+    apt-get -o Acquire::Check-Valid-Until=false update && \
     apt-get install -y --no-install-recommends \
       cron \
       libpq-dev \
@@ -24,9 +25,7 @@ RUN mkdir -p /opt/.gem && \
     rm -rf /var/lib/apt/lists/* && \
     echo "gem: --no-document" > /root/.gemrc && \
     gem install bundler:2.1.4 && \
-    npm install -g --unsafe-perm aglio@2.3.0 && \
-    # Fix permissions
-    chown -R judge0:judge0 /opt/.gem
+    npm install -g --unsafe-perm aglio@2.3.0
 
 EXPOSE 2358
 
@@ -43,13 +42,16 @@ COPY . .
 ENTRYPOINT ["/api/docker-entrypoint.sh"]
 CMD ["/api/scripts/server"]
 
+# Create non-root user and set up permissions
 RUN useradd -u 1000 -m -r judge0 && \
-    echo "judge0 ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers && \
-    chown judge0: /api/tmp/
+    echo "judge0 ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/judge0 && \
+    mkdir -p /api/tmp && \
+    chown -R judge0:judge0 /api /opt/.gem && \
+    chmod 440 /etc/sudoers.d/judge0
 
 USER judge0
 
-ENV JUDGE0_VERSION "1.13.1"
+ENV JUDGE0_VERSION=1.13.1
 LABEL version=$JUDGE0_VERSION
 
 
