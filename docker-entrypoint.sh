@@ -1,3 +1,4 @@
 #!/bin/bash
-sudo cron
+# Start cron service
+/usr/sbin/cron
 exec "$@"
