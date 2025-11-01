@@ -1,4 +1,4 @@
-FROM judge0/compilers:1.6.0-extra AS production
+FROM ubuntu:22.04 AS production
 
 ENV JUDGE0_HOMEPAGE=https://github.com/infoyouth
 LABEL homepage=$JUDGE0_HOMEPAGE
@@ -9,22 +9,33 @@ LABEL source_code=$JUDGE0_SOURCE_CODE
 ENV JUDGE0_MAINTAINER="Youth Innovations <info.youthinno@gmail.com>"
 LABEL maintainer=$JUDGE0_MAINTAINER
 
-ENV PATH=/usr/local/ruby-2.7.0/bin:/opt/.gem/bin:$PATH
+# Set timezone
+ENV TZ=UTC
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+# Install Ruby 3.2
+RUN apt-get update && apt-get install -y curl gnupg2 && \
+    curl -fsSL https://github.com/rbenv/rbenv-installer/raw/HEAD/bin/rbenv-installer | bash && \
+    echo 'eval "$(rbenv init -)"' >> /root/.bashrc && \
+    curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt-get install -y --no-install-recommends \
+      build-essential \
+      nodejs \
+      cron \
+      libpq-dev \
+      git \
+      ruby \
+      ruby-dev && \
+    rm -rf /var/lib/apt/lists/* 
+
+ENV PATH=/root/.rbenv/shims:/root/.rbenv/bin:$PATH
 ENV GEM_HOME=/opt/.gem/
 
-# Set up environment and install dependencies
-RUN echo "deb http://archive.debian.org/debian/ buster main" > /etc/apt/sources.list && \
-    echo "deb http://archive.debian.org/debian-security/ buster/updates main" >> /etc/apt/sources.list && \
-    echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99no-check-valid-until && \
-    mkdir -p /opt/.gem && \
-    apt-get -o Acquire::Check-Valid-Until=false update && \
-    apt-get install -y --no-install-recommends \
-      cron \
-      libpq-dev && \
-    rm -rf /var/lib/apt/lists/* && \
+# Install Ruby and dependencies
+RUN mkdir -p /opt/.gem && \
     echo "gem: --no-document" > /root/.gemrc && \
-    gem install bundler:2.1.4 && \
-    npm install -g --unsafe-perm aglio@2.3.0
+    gem install bundler:2.4.22 && \
+    npm install -g @apiaryio/aglio@2.3.0
 
 EXPOSE 2358
 
@@ -42,15 +53,15 @@ ENTRYPOINT ["/api/docker-entrypoint.sh"]
 CMD ["/api/scripts/server"]
 
 # Create non-root user and set up permissions
-RUN useradd -u 1000 -m -r judge0 && \
-    mkdir -p /api/tmp && \
-    chown -R judge0:judge0 /api /opt/.gem
-
-USER judge0
+RUN groupadd -r judge0 && useradd -r -g judge0 judge0 && \
+    mkdir -p /api/tmp /var/run/cron && \
+    chown -R judge0:judge0 /api /opt/.gem /var/run/cron
 
 ENV JUDGE0_VERSION=1.13.1
 LABEL version=$JUDGE0_VERSION
 
+# Switch to non-root user for better security
+USER judge0
 
 FROM production AS development
 
