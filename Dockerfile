@@ -13,55 +13,68 @@ LABEL maintainer=$JUDGE0_MAINTAINER
 ENV TZ=UTC
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-# Install Ruby 3.2
-RUN apt-get update && apt-get install -y curl gnupg2 && \
-    curl -fsSL https://github.com/rbenv/rbenv-installer/raw/HEAD/bin/rbenv-installer | bash && \
-    echo 'eval "$(rbenv init -)"' >> /root/.bashrc && \
-    curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+# Install system dependencies
+RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-      build-essential \
-      nodejs \
-      cron \
-      libpq-dev \
-      git \
-      ruby \
-      ruby-dev && \
-    rm -rf /var/lib/apt/lists/* 
+    ca-certificates \
+    curl \
+    gnupg2 \
+    build-essential \
+    cron \
+    libpq-dev \
+    git \
+    && rm -rf /var/lib/apt/lists/*
 
-ENV PATH=/root/.rbenv/shims:/root/.rbenv/bin:$PATH
-ENV GEM_HOME=/opt/.gem/
+# Add NodeJS repository and install
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt-get install -y nodejs && \
+    rm -rf /var/lib/apt/lists/*
 
-# Install Ruby and dependencies
-RUN mkdir -p /opt/.gem && \
+# Install Ruby from official Ubuntu repositories
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    ruby \
+    ruby-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set up Ruby environment
+ENV GEM_HOME=/opt/.gem
+ENV BUNDLE_PATH=$GEM_HOME
+ENV PATH=$GEM_HOME/bin:$PATH
+ENV BUNDLE_SILENCE_ROOT_WARNING=1
+
+# Install Ruby dependencies
+RUN mkdir -p $GEM_HOME && \
     echo "gem: --no-document" > /root/.gemrc && \
     gem install bundler:2.4.22 && \
-    npm install -g @apiaryio/aglio@2.3.0
+    npm install -g aglio@2.3.0
 
 EXPOSE 2358
-
-WORKDIR /api
-
-COPY Gemfile* ./
-RUN RAILS_ENV=production bundle
-
-COPY cron /etc/cron.d
-RUN cat /etc/cron.d/* | crontab -
-
-COPY . .
-
-ENTRYPOINT ["/api/docker-entrypoint.sh"]
-CMD ["/api/scripts/server"]
 
 # Create non-root user and set up permissions
 RUN groupadd -r judge0 && useradd -r -g judge0 judge0 && \
     mkdir -p /api/tmp /var/run/cron && \
-    chown -R judge0:judge0 /api /opt/.gem /var/run/cron
+    chown -R judge0:judge0 /opt/.gem /var/run/cron
+
+WORKDIR /api
+
+COPY --chown=judge0:judge0 Gemfile* ./
+RUN RAILS_ENV=production bundle
+
+COPY --chown=judge0:judge0 cron /etc/cron.d
+RUN cat /etc/cron.d/* | crontab -
+
+COPY --chown=judge0:judge0 . .
+RUN chown -R judge0:judge0 /api
 
 ENV JUDGE0_VERSION=1.13.1
 LABEL version=$JUDGE0_VERSION
 
 # Switch to non-root user for better security
 USER judge0
+
+ENTRYPOINT ["/api/docker-entrypoint.sh"]
+CMD ["/api/scripts/server"]
 
 FROM production AS development
 
