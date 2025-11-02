@@ -20,7 +20,6 @@ RUN apt-get update && \
     curl \
     gnupg2 \
     build-essential \
-    cron \
     libpq-dev \
     git \
     && rm -rf /var/lib/apt/lists/*
@@ -52,23 +51,21 @@ RUN mkdir -p $GEM_HOME && \
 EXPOSE 2358
 
 # Set up required directories and permissions
-RUN mkdir -p /api/tmp /var/run/cron /var/lib/cron /var/log/cron && \
-    chmod 777 /var/run && \
-    chmod 777 /var/run/cron && \
-    chmod 777 /var/lib/cron && \
-    chmod 777 /var/log/cron && \
+RUN mkdir -p /api/tmp /var/run && \
     # Create non-root user
     groupadd -r judge0 && \
     useradd -r -g judge0 judge0 && \
-    chown -R judge0:judge0 /api /opt/.gem
+    # Set permissions
+    chown -R judge0:judge0 /api /opt/.gem /var/run && \
+    chmod -R 755 /var/run
 
 WORKDIR /api
 
 COPY --chown=judge0:judge0 Gemfile* ./
 RUN RAILS_ENV=production bundle
 
-COPY --chown=judge0:judge0 cron /etc/cron.d
-RUN cat /etc/cron.d/* | crontab -
+# We replaced system cron with an in-process scheduler started by the entrypoint.
+# Do not install system crontab here; cron package was removed.
 
 COPY --chown=judge0:judge0 . .
 RUN chown -R judge0:judge0 /api
