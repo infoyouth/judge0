@@ -1,6 +1,13 @@
 #!/bin/bash
 set -e
 
+# Start Redis server in background (if not already running externally)
+if [ -z "$REDIS_HOST" ] || [ "$REDIS_HOST" = "localhost" ] || [ "$REDIS_HOST" = "127.0.0.1" ]; then
+    echo "Starting Redis server..."
+    redis-server --daemonize yes --bind 127.0.0.1
+    REDIS_PID=$!
+fi
+
 # Lightweight in-process scheduler to replace system cron.
 # It runs two background loops:
 #  - clear_cache: daily (every 24h)
@@ -43,6 +50,8 @@ shutdown_handler() {
         [ -n "$SCHED_TELE_PID" ] && kill "$SCHED_TELE_PID" 2>/dev/null || true
         # Kill main app if running
         [ -n "$MAIN_PID" ] && kill "$MAIN_PID" 2>/dev/null || true
+        # Kill Redis if we started it
+        [ -n "$REDIS_PID" ] && kill "$REDIS_PID" 2>/dev/null || true
         wait
         exit 0
 }

@@ -22,6 +22,7 @@ RUN apt-get update && \
     build-essential \
     libpq-dev \
     git \
+    redis-server \
     && rm -rf /var/lib/apt/lists/*
 
 # Add NodeJS repository and install
